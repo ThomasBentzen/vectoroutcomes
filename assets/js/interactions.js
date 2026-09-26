@@ -63,7 +63,7 @@
       minDuration: 400,  // ms, short hops
       maxDuration: 900,  // ms, long journeys are capped here
       msPerPx: 0.45,     // Duration grows with distance until the cap
-      extraOffset: 32    // Gap between the sticky header and the section's first content, in px
+      extraOffset: 24    // Gap between the sticky header and the section's first content, in px
     }
   };
 
