@@ -19,6 +19,8 @@
  *   .instrument-line > .instrument-item cockpit readout strip
  *   svg.vector-arrow .vector-arrow-path the signature arrow, drawn tail to tip
  *   a[href^="#"]                        any in-page link (nav, CTAs, cues)
+ *   [data-scroll-anchor]                optional, inside a section: align this
+ *                                       element's content instead of the section's
  *
  * Every interaction respects prefers-reduced-motion: with it enabled,
  * elements render in their final, static state and links jump directly.
@@ -44,7 +46,7 @@
       minDuration: 400,  // ms, short hops
       maxDuration: 900,  // ms, long journeys are capped here
       msPerPx: 0.45,     // Duration grows with distance until the cap
-      extraOffset: 16    // Breathing room below the sticky header, in px
+      extraOffset: 32    // Gap between the sticky header and the section's first content, in px
     }
   };
 
@@ -197,12 +199,30 @@
         if (history.pushState) history.pushState(null, '', hash);
       });
     });
+
+    // Opening a shared link such as /#about: once layout and images have
+    // settled, correct the browser's native jump to the same content position
+    if (location.hash.length > 1) {
+      window.addEventListener('load', () => {
+        const target = document.getElementById(decodeURIComponent(location.hash.slice(1)));
+        if (target) jumpTo(getTargetY(target));
+      }, { once: true });
+    }
   }
 
   function getHeaderOffset() {
     const header = document.querySelector('.site-header');
     const height = header ? header.getBoundingClientRect().height : 0;
     return height + CONFIG.scroll.extraOffset;
+  }
+
+  // Where the page should rest so the target's content, not its top padding,
+  // sits just below the sticky header
+  function getTargetY(target) {
+    const anchor = target.querySelector('[data-scroll-anchor]') || target;
+    const paddingTop = parseFloat(getComputedStyle(anchor).paddingTop) || 0;
+    const y = anchor.getBoundingClientRect().top + (window.scrollY || window.pageYOffset) + paddingTop - getHeaderOffset();
+    return clamp(y, 0, document.documentElement.scrollHeight - window.innerHeight);
   }
 
   function jumpTo(y) {
@@ -214,9 +234,7 @@
     if (cancelActiveScroll) cancelActiveScroll();
 
     const startY = window.scrollY || window.pageYOffset;
-    const rawY = target.getBoundingClientRect().top + startY - getHeaderOffset();
-    const maxY = document.documentElement.scrollHeight - window.innerHeight;
-    const targetY = clamp(rawY, 0, maxY);
+    const targetY = getTargetY(target);
     const distance = targetY - startY;
 
     if (prefersReducedMotion() || Math.abs(distance) < 2) {
