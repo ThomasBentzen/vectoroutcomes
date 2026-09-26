@@ -9,18 +9,21 @@
  *
  * Contents
  *   0. CONFIG and helpers       (tune speeds, easing and offsets here)
- *   A. Instrument line parallax  initInstrumentParallax / destroyInstrumentParallax
+ *   A. Instrument parallax       initInstrumentParallax / destroyInstrumentParallax
  *   B. Vector arrow draw-in      initVectorArrowAnimation
  *   C. Smooth in-page scrolling  initSmoothScroll
- *   D. Initialisation            initInteractions (runs after DOMContentLoaded)
+ *   D. Scroll reveal             initScrollReveal / revealAll
+ *   E. Initialisation            initInteractions (runs after DOMContentLoaded)
  *
  * Expected markup (class names are the contract with the HTML):
  *   .site-header                        sticky header, used for scroll offset
  *   .instrument-line > .instrument-item cockpit readout strip
+ *   .hero-art .horizon                  artificial horizon group, banks on scroll
  *   svg.vector-arrow .vector-arrow-path the signature arrow, drawn tail to tip
  *   a[href^="#"]                        any in-page link (nav, CTAs, cues)
- *   [data-scroll-anchor]                optional, inside a section: align this
- *                                       element's content instead of the section's
+ *   [data-scroll-anchor]                optional, direct child of a section: align
+ *                                       this element's content instead of the section's
+ *   .reveal / .draw-line / .is-visible  scroll reveal states, styled in index.html
  *
  * Every interaction respects prefers-reduced-motion: with it enabled,
  * elements render in their final, static state and links jump directly.
@@ -33,10 +36,27 @@
    * ================================================================ */
   const CONFIG = {
     parallax: {
-      speedY: 0.35,      // Fraction of scroll distance applied to the strip (0.3 to 0.4 feels subtle)
-      maxY: 48,          // Clamp in px, so the strip never drifts far from its home position
-      driftX: 3,         // Max horizontal drift in px. Keep tiny for legibility
+      speedY: 0.25,      // Fraction of scroll distance applied to the strip
+      maxY: 96,          // Clamp in px. Also capped by the strip's bottom padding, so it never overlaps the next section
+      driftX: 4,         // Max horizontal drift in px. Keep tiny for legibility
       driftPeriod: 600   // Scroll px per drift cycle. Larger = slower sway
+    },
+    horizon: {
+      maxBank: 14,       // Degrees the horizon rolls by the end of the range. 0 turns the effect off
+      maxPitch: 26,      // Px the horizon drops (nose up, climbing out) by the end of the range
+      range: 520         // Scroll px over which bank and pitch build up
+    },
+    reveal: {
+      selector: [
+        '.section-head', '#certifications .stack', '.split > *', '.laws > div',
+        '.cards > .card', '.phases > div', '.stats > .stat', '#testimonials .eyebrow',
+        '.featured', '.quotes > .card', '.about > img', '.about > .stack',
+        '.facts > div', '.chips > span', '.contact > :not(.btn)'
+      ].join(','),
+      lineSelector: '.laws > div, .phases > div, .facts > div, .about', // Top borders that draw left to right
+      stagger: 90,       // ms between siblings revealed together
+      maxStagger: 6,     // Siblings after this share the last delay, so long groups don't drag
+      rootMargin: '0px 0px -12% 0px' // Reveal once an element is ~12% above the bottom of the screen
     },
     arrow: {
       duration: 1000,          // Draw duration in ms (800 to 1200 recommended)
@@ -74,6 +94,11 @@
     if (!line || prefersReducedMotion()) return;
 
     const cfg = CONFIG.parallax;
+    const hcfg = CONFIG.horizon;
+    const horizon = hcfg.maxBank || hcfg.maxPitch ? document.querySelector('.hero-art .horizon') : null;
+    // Never travel further than the strip's own bottom padding
+    const maxY = () => Math.max(0, Math.min(cfg.maxY, (parseFloat(getComputedStyle(line).paddingBottom) || 0) - 8));
+    let limitY = maxY();
     // Measure an untransformed neighbour, so reading position never
     // includes our own transform. Works whether the window or an inner
     // container is the thing that scrolls.
@@ -90,9 +115,15 @@
       const home = homeTop();
       if (home < -vh || home > vh * 2) return; // Far off screen: skip work
       const delta = restTop - home; // Distance scrolled since rest, in px
-      const ty = clamp(delta * cfg.speedY, 0, cfg.maxY);
+      const ty = clamp(delta * cfg.speedY, 0, limitY);
       const tx = Math.sin(delta / cfg.driftPeriod * Math.PI * 2) * cfg.driftX;
       line.style.transform = `translate3d(${tx.toFixed(2)}px, ${ty.toFixed(2)}px, 0)`;
+
+      if (horizon) {
+        const t = easeOutCubic(clamp(delta / hcfg.range, 0, 1));
+        horizon.setAttribute('transform',
+          `rotate(${(-hcfg.maxBank * t).toFixed(2)} 230 230) translate(0 ${(hcfg.maxPitch * t).toFixed(2)})`);
+      }
     };
 
     const onScroll = () => {
@@ -104,11 +135,11 @@
     line.style.willChange = 'transform';
     // Capture phase on document also catches scrolling inside containers
     document.addEventListener('scroll', onScroll, { passive: true, capture: true });
-    const onResize = () => { restTop = homeTop() + (window.scrollY || 0); onScroll(); };
+    const onResize = () => { restTop = homeTop() + (window.scrollY || 0); limitY = maxY(); onScroll(); };
     window.addEventListener('resize', onResize, { passive: true });
     update();
 
-    parallaxState = { line, onScroll, onResize };
+    parallaxState = { line, horizon, onScroll, onResize };
   }
 
   function destroyInstrumentParallax() {
@@ -117,6 +148,7 @@
     window.removeEventListener('resize', parallaxState.onResize);
     parallaxState.line.style.transform = '';
     parallaxState.line.style.willChange = '';
+    if (parallaxState.horizon) parallaxState.horizon.removeAttribute('transform');
     parallaxState = null;
   }
 
@@ -219,7 +251,8 @@
   // Where the page should rest so the target's content, not its top padding,
   // sits just below the sticky header
   function getTargetY(target) {
-    const anchor = target.querySelector('[data-scroll-anchor]') || target;
+    // Direct children only, so a wrapper like <main id="top"> doesn't pick up a nested section's anchor
+    const anchor = target.querySelector(':scope > [data-scroll-anchor]') || target;
     const paddingTop = parseFloat(getComputedStyle(anchor).paddingTop) || 0;
     const y = anchor.getBoundingClientRect().top + (window.scrollY || window.pageYOffset) + paddingTop - getHeaderOffset();
     return clamp(y, 0, document.documentElement.scrollHeight - window.innerHeight);
@@ -284,18 +317,68 @@
   }
 
   /* ================================================================
-   * D. INITIALISATION
+   * D. SCROLL REVEAL
+   * Content fades in and rises as it enters the viewport, and divider
+   * lines draw left to right. Classes are only added here, so without
+   * JavaScript or with reduced motion the page renders fully visible.
+   * ================================================================ */
+  let revealObserver = null;
+
+  function initScrollReveal() {
+    if (prefersReducedMotion() || !('IntersectionObserver' in window)) return;
+    const cfg = CONFIG.reveal;
+    const items = Array.from(document.querySelectorAll(cfg.selector));
+    const lines = Array.from(document.querySelectorAll(cfg.lineSelector));
+    if (!items.length && !lines.length) return;
+
+    // Stagger siblings that share a parent, in document order
+    const counts = new Map();
+    items.forEach((el) => {
+      const i = counts.get(el.parentElement) || 0;
+      counts.set(el.parentElement, i + 1);
+      el.style.setProperty('--reveal-delay', `${Math.min(i, cfg.maxStagger) * cfg.stagger}ms`);
+      el.classList.add('reveal');
+    });
+
+    // Redraw each top border as a pseudo-element in the same colour and width
+    lines.forEach((el) => {
+      const cs = getComputedStyle(el);
+      el.style.setProperty('--line-color', cs.borderTopColor);
+      el.style.setProperty('--line-width', cs.borderTopWidth);
+      el.classList.add('draw-line');
+    });
+
+    revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add('is-visible');
+        revealObserver.unobserve(entry.target); // Reveal once
+      });
+    }, { rootMargin: cfg.rootMargin, threshold: 0 });
+
+    new Set([...items, ...lines]).forEach((el) => revealObserver.observe(el));
+  }
+
+  function revealAll() {
+    if (revealObserver) revealObserver.disconnect();
+    revealObserver = null;
+    document.querySelectorAll('.reveal, .draw-line').forEach((el) => el.classList.add('is-visible'));
+  }
+
+  /* ================================================================
+   * E. INITIALISATION
    * ================================================================ */
   function initInteractions() {
     initInstrumentParallax();
     initVectorArrowAnimation();
     initSmoothScroll();
+    initScrollReveal();
   }
 
   // If the visitor toggles reduced motion while on the page, follow it
   if (reducedMotionQuery.addEventListener) {
     reducedMotionQuery.addEventListener('change', () => {
-      if (prefersReducedMotion()) destroyInstrumentParallax();
+      if (prefersReducedMotion()) { destroyInstrumentParallax(); revealAll(); }
       else initInstrumentParallax();
     });
   }
@@ -307,7 +390,9 @@
     initInstrumentParallax,
     destroyInstrumentParallax,
     initVectorArrowAnimation,
-    initSmoothScroll
+    initSmoothScroll,
+    initScrollReveal,
+    revealAll
   };
 
   if (document.readyState === 'loading') {
