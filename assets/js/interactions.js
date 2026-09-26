@@ -47,7 +47,7 @@
       selector: [
         '.section-head', '#certifications .stack', '.split > *', '.laws > div',
         '.cards > .card', '.phases > div', '.stats > .stat', '#testimonials .eyebrow',
-        '.featured', '.quotes > .card', '.about-media > img', '.about > .stack',
+        '.featured', '.quotes > .card', '.about-media > *', '.about > .stack',
         '.facts > div', '.chips > span', '.contact > :not(.btn)'
       ].join(','),
       lineSelector: '.laws > div, .phases > div, .facts > div, .about', // Top borders that draw left to right
