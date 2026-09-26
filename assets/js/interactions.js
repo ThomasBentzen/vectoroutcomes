@@ -9,7 +9,7 @@
  *
  * Contents
  *   0. CONFIG and helpers       (tune speeds, easing and offsets here)
- *   A. Instrument parallax       initInstrumentParallax / destroyInstrumentParallax
+ *   A. Instrument line parallax  initInstrumentParallax / destroyInstrumentParallax
  *   B. Vector arrow draw-in      initVectorArrowAnimation
  *   C. Smooth in-page scrolling  initSmoothScroll
  *   D. Scroll reveal             initScrollReveal / revealAll
@@ -18,12 +18,14 @@
  * Expected markup (class names are the contract with the HTML):
  *   .site-header                        sticky header, used for scroll offset
  *   .instrument-line > .instrument-item cockpit readout strip
- *   .hero-art .horizon                  artificial horizon group, banks on scroll
  *   svg.vector-arrow .vector-arrow-path the signature arrow, drawn tail to tip
  *   a[href^="#"]                        any in-page link (nav, CTAs, cues)
  *   [data-scroll-anchor]                optional, direct child of a section: align
  *                                       this element's content instead of the section's
  *   .reveal / .draw-line / .is-visible  scroll reveal states, styled in index.html
+ *
+ * The hero artificial horizon (.hero-art) is deliberately never scripted:
+ * it always shows straight and level flight.
  *
  * Every interaction respects prefers-reduced-motion: with it enabled,
  * elements render in their final, static state and links jump directly.
@@ -40,11 +42,6 @@
       maxY: 96,          // Clamp in px. Also capped by the strip's bottom padding, so it never overlaps the next section
       driftX: 4,         // Max horizontal drift in px. Keep tiny for legibility
       driftPeriod: 600   // Scroll px per drift cycle. Larger = slower sway
-    },
-    horizon: {
-      maxBank: 14,       // Degrees the horizon rolls by the end of the range. 0 turns the effect off
-      maxPitch: 26,      // Px the horizon drops (nose up, climbing out) by the end of the range
-      range: 520         // Scroll px over which bank and pitch build up
     },
     reveal: {
       selector: [
@@ -94,8 +91,6 @@
     if (!line || prefersReducedMotion()) return;
 
     const cfg = CONFIG.parallax;
-    const hcfg = CONFIG.horizon;
-    const horizon = hcfg.maxBank || hcfg.maxPitch ? document.querySelector('.hero-art .horizon') : null;
     // Never travel further than the strip's own bottom padding
     const maxY = () => Math.max(0, Math.min(cfg.maxY, (parseFloat(getComputedStyle(line).paddingBottom) || 0) - 8));
     let limitY = maxY();
@@ -118,12 +113,6 @@
       const ty = clamp(delta * cfg.speedY, 0, limitY);
       const tx = Math.sin(delta / cfg.driftPeriod * Math.PI * 2) * cfg.driftX;
       line.style.transform = `translate3d(${tx.toFixed(2)}px, ${ty.toFixed(2)}px, 0)`;
-
-      if (horizon) {
-        const t = easeOutCubic(clamp(delta / hcfg.range, 0, 1));
-        horizon.setAttribute('transform',
-          `rotate(${(-hcfg.maxBank * t).toFixed(2)} 230 230) translate(0 ${(hcfg.maxPitch * t).toFixed(2)})`);
-      }
     };
 
     const onScroll = () => {
@@ -139,7 +128,7 @@
     window.addEventListener('resize', onResize, { passive: true });
     update();
 
-    parallaxState = { line, horizon, onScroll, onResize };
+    parallaxState = { line, onScroll, onResize };
   }
 
   function destroyInstrumentParallax() {
@@ -148,7 +137,6 @@
     window.removeEventListener('resize', parallaxState.onResize);
     parallaxState.line.style.transform = '';
     parallaxState.line.style.willChange = '';
-    if (parallaxState.horizon) parallaxState.horizon.removeAttribute('transform');
     parallaxState = null;
   }
 

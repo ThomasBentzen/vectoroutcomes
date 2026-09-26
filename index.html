@@ -62,8 +62,8 @@ header{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:co
 .hero h1{font-size:clamp(40px,5.6vw,72px);line-height:1.05;letter-spacing:-.03em}
 .hero h1 span{color:var(--accent)}
 .hero .ctas{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px}
-.hero-art{display:flex;justify-content:center}
-.hero-art svg{width:min(100%,420px);height:auto}
+.hero-art{display:flex;justify-content:center;transform:none}
+.hero-art svg{width:min(100%,420px);height:auto;transform:none}
 @media (max-width:860px){.hero{grid-template-columns:1fr}.hero-art svg{width:min(80%,300px)}.hero .ctas .btn{flex:1 1 100%}}
 .readout{display:flex;align-items:center;gap:20px;padding-bottom:clamp(56px,8vw,104px);font-size:12px;font-weight:600;letter-spacing:.14em;color:var(--muted)}
 .readout i{flex:1;height:1px;background:var(--ink);opacity:.8}
@@ -187,23 +187,25 @@ footer a{color:var(--dark-muted)}
       </div>
     </div>
     <div class="hero-art">
-      <svg viewBox="0 0 460 460" role="img" aria-label="Artificial horizon instrument">
+      <svg viewBox="0 0 460 460" width="460" height="460" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Artificial horizon instrument, straight and level">
         <defs><clipPath id="dial"><circle cx="230" cy="230" r="190"/></clipPath></defs>
         <circle cx="230" cy="230" r="222" fill="#0B2545"/>
-        <g clip-path="url(#dial)"><g class="horizon">
-          <rect x="-60" y="-60" width="580" height="290" fill="#2D5F93"/>
-          <rect x="-60" y="230" width="580" height="290" fill="#6E5139"/>
-          <line x1="-60" y1="230" x2="520" y2="230" stroke="#F5F7FA" stroke-width="2.5"/>
+        <g clip-path="url(#dial)">
+          <rect x="0" y="0" width="460" height="230" fill="#2D5F93"/>
+          <rect x="0" y="230" width="460" height="230" fill="#6E5139"/>
+          <line x1="0" y1="230" x2="460" y2="230" stroke="#F5F7FA" stroke-width="2.5"/>
           <line x1="200" y1="190" x2="260" y2="190" stroke="#F5F7FA" stroke-width="2"/>
           <line x1="185" y1="150" x2="275" y2="150" stroke="#F5F7FA" stroke-width="2"/>
           <line x1="200" y1="270" x2="260" y2="270" stroke="#F5F7FA" stroke-width="2"/>
           <line x1="185" y1="310" x2="275" y2="310" stroke="#F5F7FA" stroke-width="2"/>
           <text x="292" y="155" fill="#F5F7FA" font-family="Plus Jakarta Sans, sans-serif" font-size="14">10</text>
           <text x="292" y="315" fill="#F5F7FA" font-family="Plus Jakarta Sans, sans-serif" font-size="14">10</text>
-        </g></g>
+          <text x="168" y="155" text-anchor="end" fill="#F5F7FA" font-family="Plus Jakarta Sans, sans-serif" font-size="14">10</text>
+          <text x="168" y="315" text-anchor="end" fill="#F5F7FA" font-family="Plus Jakarta Sans, sans-serif" font-size="14">10</text>
+        </g>
         <circle cx="230" cy="230" r="190" fill="none" stroke="#F5F7FA" stroke-opacity="0.35" stroke-width="1.5"/>
-        <path d="M130 232 L200 232 L215 250 M330 232 L260 232 L245 250" fill="none" stroke="#F0A04B" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
-        <circle cx="230" cy="232" r="6" fill="#F0A04B"/>
+        <path d="M130 230 L200 230 L215 248 M330 230 L260 230 L245 248" fill="none" stroke="#F0A04B" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="230" cy="230" r="6" fill="#F0A04B"/>
         <path d="M230 22 L222 38 L238 38 Z" fill="#F0A04B"/>
       </svg>
     </div>
@@ -279,7 +281,7 @@ footer a{color:var(--dark-muted)}
         <div class="stat"><b>145K</b><span>cases a year resolved autonomously</span></div>
         <div class="stat"><b>70%</b><span>faster resolution time</span></div>
       </div>
-      <p class="note">[Client name, pending approval]</p>
+      <!-- TODO: restore once the client approves being named: <p class="note">[Client name]</p> -->
     </div>
   </section>
 
@@ -339,19 +341,20 @@ footer a{color:var(--dark-muted)}
         <h2>Ready for smooth air?</h2>
         <p class="lead" style="color:var(--dark-muted)">Book a 30 minute intro call. No slides and no hype, just an honest conversation about where you are and where you want to go.</p>
         <a class="btn btn-primary nav-link-internal" href="#contact">Book an intro call</a>
-        <p style="font-size:15px">[EMAIL] · Based in Denmark, working remotely in English and Danish</p>
+        <!-- TODO: add the contact email back in front: <p style="font-size:15px">[EMAIL] · Based in Denmark, ...</p> -->
+        <p style="font-size:15px">Based in Denmark, working remotely in English and Danish</p>
       </div>
       <footer>
         <span>© 2026 VECTOR OUTCOMES</span>
-        <span>CVR [NUMBER]</span>
+        <!-- TODO: add the CVR number here: <span>CVR [NUMBER]</span> -->
         <a href="https://www.linkedin.com/in/thomasbentzen777b/" target="_blank" rel="noopener">LINKEDIN</a>
         <span>VECTOROUTCOMES.COM</span>
       </footer>
     </div>
   </section>
 </main>
-<script src="assets/js/interactions.js?v=4" defer></script>
+<script src="assets/js/interactions.js?v=5" defer></script>
 <!-- TEMPORARY scroll test: remove this line and assets/js/scroll-test.js -->
-<script src="assets/js/scroll-test.js?v=4" defer></script>
+<script src="assets/js/scroll-test.js?v=5" defer></script>
 </body>
 </html>

@@ -27,7 +27,13 @@ Speeds, easing and offsets live in the `CONFIG` object at the top of
 
 ## Open placeholders
 
-- `[Client name, pending approval]` in the case study
-- `[EMAIL]` in the contact section
-- `CVR [NUMBER]` in the footer
+Hidden from the page until the content exists. Each spot has a `TODO`
+comment in `index.html` with the markup to restore:
+
+- Client name under the case study stats (pending approval)
+- Contact email in the contact section
+- CVR number in the footer
+
+Still visible:
+
 - "Book an intro call" buttons still point to `#contact`
