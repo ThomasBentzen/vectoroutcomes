@@ -34,13 +34,13 @@ its own email subject, so you can tell them apart in your inbox.
    and confirm the address.
 2. Create a new form. Formspree gives it an endpoint like
    `https://formspree.io/f/abcdwxyz`.
-3. In `index.html`, replace `YOUR_FORM_ID` in the lead form's `action`
-   attribute with that ID.
+3. In `index.html`, set the lead form's `action` attribute to that endpoint.
+   The live form ID is `xrpbokjw`.
 4. Optional: in the Formspree form settings, restrict submissions to
    `vectoroutcomes.com`.
 
-Until step 3 is done, submitting shows a polite message asking visitors to
-email `info@vectoroutcomes.com` instead.
+If a submission fails, the form shows a polite message asking visitors to
+email `info@vectoroutcomes.com` instead, and keeps what they typed.
 
 ### Extending
 
@@ -59,5 +59,4 @@ email `info@vectoroutcomes.com` instead.
 
 ## Open placeholders
 
-- Formspree form ID in `index.html` (`YOUR_FORM_ID`, see above)
 - CVR number in the footer (a `TODO` comment in `index.html` holds the markup)
