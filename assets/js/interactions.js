@@ -46,7 +46,7 @@
     reveal: {
       selector: [
         '.section-head', '#certifications .stack', '.split > *', '.laws > div',
-        '.cards > .card', '.phases > div', '.stats > .stat', '#testimonials .eyebrow',
+        '.cards > .card', '.phases > div', '.blueprint-main > *', '.badge-wrap', '#testimonials .eyebrow',
         '.featured', '.quotes > .card', '.about-media', '.about > .stack',
         '.facts > div', '.chips > span', '.contact > :not(.btn)'
       ].join(','),
